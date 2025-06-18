@@ -1,14 +1,13 @@
-FROM python:3.10-slim-buster
+FROM python:3.9-slim
+
+# Install curl + Docker CLI
+RUN apt-get update && \
+    apt-get install -y docker.io curl && \
+    pip install flask
 
 WORKDIR /app
-
-COPY . /app
-
-RUN ls -l /app/requirements.txt
-RUN cat /app/requirements.txt
-
-RUN pip install --no-cache-dir -r requirements.txt
+COPY load_balancer.py .
 
 EXPOSE 5000
 
-CMD ["python", "server.py"]
+CMD ["python", "load_balancer.py"]
