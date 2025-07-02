@@ -22,6 +22,7 @@ This project implements a simple distributed web server system with a basic load
 To build the Docker image for the server:
 ```bash
 make build-server-image
+```
 
 ## Testing & Observations
 

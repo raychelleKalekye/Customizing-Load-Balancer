@@ -41,7 +41,7 @@ We performed load and failure tests across 3 core test categories:
 
 ### Visualization
 
-![A-1 Load Distribution](./A-1.png)
+![A-1 Load Distribution](./A-1.jpg)
 
 ---
 
@@ -60,7 +60,7 @@ We performed load and failure tests across 3 core test categories:
 
 ### Visualization
 
-![A-2 Scalability](./A-2.png)
+![A-2 Scalability](./A-2.jpg)
 
 ---
 
