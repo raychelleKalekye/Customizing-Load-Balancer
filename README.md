@@ -1,99 +1,162 @@
 # Distributed Load Balancer Project
 
-## Overview
-This project implements a simple distributed web server system with a basic load balancer to distribute requests among multiple server replicas. The server and load balancer are containerized using Docker.
+## 🚀 Overview
 
-## Project Structure
-- `server.py`: The backend Flask web server application.
-- `load_balancer.py`: The Flask application acting as a load balancer.
-- `Dockerfile`: Used to containerize the `server.py` application.
-- `requirements.txt`: Lists the Python dependencies for the server.
-- `Makefile`: Automates building Docker images and running the services.
-- `README.md`: This file.
+This project implements a distributed web server system using a consistent hashing-based load balancer to distribute HTTP requests among multiple backend servers. Both the servers and the load balancer are containerized using Docker, enabling simple orchestration and deployment.
 
-## Setup and Running the Application
-
-### Prerequisites
-- Docker Desktop (or Docker Engine on Linux) installed and running.
-- Python 3.9+ (for running the load balancer locally and installing dependencies).
-- `pip` for Python package management.
-
-### Building the Server Image
-To build the Docker image for the server:
-```bash
-make build-server-image
-```
-
-## Testing & Observations
-
-Performance tests were conducted to evaluate the behavior of the load balancer under different conditions: balanced routing, scaling, fault tolerance, and sticky sessions.
-
-### 🔹 A-1: Load Distribution (Round-Robin)
-
-* **Test**: 10,000 requests sent to 3-server system.
-* **Result**: Each server handled \~3333 requests.
-* **Observation**: Round-robin effectively balanced the load, with slight variation due to response latency.
+The project also includes a full testing suite to evaluate performance under various conditions, including load balancing accuracy, scalability, fault tolerance, and hash function effectiveness.
 
 ---
+
+## 📁 Project Structure
+
+```bash
+├── docs/
+│   ├── A-1.jpg
+│   ├── A-2.jpg
+│   └── TEST_RESULTS.md
+├── load_balancer/
+│   ├── consistent_hash.py
+│   ├── Dockerfile
+│   └── load_balancer.py
+├── results/
+│   ├── requests_per_server.txt
+│   └── response_times.json
+├── servers/
+│   ├── Dockerfile
+│   └── server.py
+├── tests/
+│   ├── a1_load_distribution.py
+│   ├── a2_scalability_test.py
+│   ├── a3_fault_tolerance.py
+│   ├── a4_hash_function_analysis.py
+│   ├── a4_1_load_distribution.png
+│   └── a4_2_scalability.png
+├── .gitignore
+├── docker-compose.yml
+├── Makefile
+├── README.md
+└── requirements.txt
+```
+
+---
+
+## ⚙️ Deployment Guide
+
+### 🔧 Prerequisites
+
+Ensure you have the following installed:
+
+* Docker (Docker Desktop or Docker Engine)
+* Docker Compose
+* Python 3.9+
+* `pip` package manager
+
+### 🛠 Step-by-Step Deployment
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/distributed-load-balancer.git
+cd distributed-load-balancer
+```
+
+#### 2. Build Docker Images
+
+Use the Makefile for ease of setup:
+
+```bash
+make build-server-image      # Builds the backend server image
+make build-loadbalancer      # Builds the load balancer image
+```
+
+Alternatively, manually:
+
+```bash
+docker build -t server-image ./servers
+docker build -t lb-image ./load_balancer
+```
+
+#### 3. Start the System
+
+Bring up the services using Docker Compose:
+
+```bash
+docker-compose up --scale server=3 --build
+```
+
+> 🔄 You can adjust the number of servers by changing the `--scale` parameter.
+
+#### 4. Run the Load Balancer
+
+The load balancer will start on `localhost:5000`. Test it using:
+
+```bash
+curl http://localhost:5000/home
+```
+
+You should see a message like:
+
+```json
+{"message": "Hello from Server: 1"}
+```
+
+---
+
+## 📊 Testing & Observations
+
+Various performance evaluation tests were implemented to study the behavior under different system conditions.
+
+### 🔹 A-1: Load Distribution
+
+* **Test**: 10,000 requests sent to a 3-server cluster.
+* **Result**: Each server handled roughly 1/3 of the load.
+* **Image**: ![A-1](docs/A-1.jpg)
 
 ### 🔹 A-2: Scalability
 
-* **Test**: Server count increased from 2 → 6.
-* **Result**: Requests per server dropped proportionally.
-* **Observation**: Demonstrated good horizontal scalability under stateless load distribution.
-
----
+* **Test**: Scaled from 2 to 6 servers.
+* **Result**: Load distribution decreased proportionally.
+* **Image**: ![A-2](docs/A-2.jpg)
 
 ### 🔹 A-3: Fault Tolerance
 
-* **Test**: One server instance was intentionally stopped mid-test.
-* **Result**: Initial 5xx errors occurred.
-* **Recovery**: Docker’s auto-restart restored the container, and service resumed.
-* **Recommendation**: Implement retry-on-failure logic in the load balancer for smoother recovery.
+* **Test**: Simulated server failure mid-operation.
+* **Observation**: After stopping one container, request distribution rebalanced after container recovery.
+* **Note**: Retry logic should be implemented for seamless failover.
+
+### 🔹 A-4: Hash Function Analysis
+
+* **Test**: Compared 3 hash strategies under load.
+* **Results**:
+
+  * Sticky sessions confirmed for same hash values.
+  * Imbalanced load on poor hash functions.
+  * Visualization available:
+
+    * ![A-4.1](tests/a4_1_load_distribution.png)
+    * ![A-4.2](tests/a4_2_scalability.png)
 
 ---
 
-### 🔹 A-4: Sticky Sessions (Hash-Based Routing)
+## 📂 Data & Logs
 
-* **Test**: Load balancer routed requests by hashing client IPs.
-* **Result**: Same client consistently routed to the same server (sticky sessions).
-* **Observation**: Imbalanced load under skewed traffic patterns.
-* **Conclusion**: Use hashing only if session persistence is required. Round-robin is fairer under uniform traffic.
-
----
-
-## Results and Raw Data
-
-Explore the full results, charts, and architecture in the following files:
-
-* 📊 [`docs/TEST_RESULTS.md`](./docs/TEST_RESULTS.md) — In-depth analysis and visuals
-* 🕒 [`results/response_times.json`](./results/response_times.json) — Raw server response times
-* 📈 [`results/requests_per_server.csv`](./results/requests_per_server.csv) — Server-wise request count
+* [`docs/TEST_RESULTS.md`](./docs/TEST_RESULTS.md): Detailed test results and analysis
+* [`results/response_times.json`](./results/response_times.json): Timing data
+* [`results/requests_per_server.txt`](./results/requests_per_server.txt): Server request logs
 
 ---
 
-## Future Improvements
+## 🚀 Future Improvements
 
-* Add automatic health checks to the load balancer
-* Implement retry and backoff strategies for failed requests
+* Add automatic health checks and removal of failed nodes
+* Integrate retry & backoff strategies in the load balancer
 * Introduce latency-aware or least-connection routing
-* Visualize real-time metrics via Grafana or Prometheus
-* Extend to a Kubernetes-based deployment for orchestration
+* Real-time dashboards with Prometheus + Grafana
+* Migrate to Kubernetes for dynamic scaling and resilience
 
 ---
 
-## License
+## 📜 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-
-
-
-
-
-
-
-
-
-
-
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for full terms.

@@ -1,132 +1,153 @@
-# 📊 Distributed Load Balancer - Performance Test Report
+# TEST\_RESULTS.md
 
-## 1. 🔧 Test Environment and Setup
+## 📘 Overview
 
-### Tools and Frameworks
-
-* **Load Generator**: Apache Benchmark (`ab`) and custom Python script with `requests`.
-* **Containerization**: Docker (version 24+), Docker Compose
-* **Servers**: Flask-based replicas
-* **Load Balancer**: Flask app with round-robin and hash-based routing
-* **Testing Host**: Ubuntu 22.04 LTS, 8-core CPU, 16GB RAM
-
-### Scenario
-
-We performed load and failure tests across 3 core test categories:
-
-1. **Load Distribution** (A-1)
-2. **Scalability** (A-2)
-3. **Failure Recovery** (A-3)
-4. **Sticky Sessions via Hash Routing** (A-4)
+This document contains the results and execution guidelines for a series of tests conducted on a consistent hashing-based load balancer implemented for a distributed system. Each test focuses on a different aspect of the system, such as load distribution, scalability, fault tolerance, and the effects of various hash functions. The objective is to analyze the system's behavior under simulated production-like conditions and evaluate its performance and robustness.
 
 ---
 
-## 2. 🔹 A-1: Load Distribution (Round-Robin)
+## 🧪 Test A-1: Load Distribution Across 3 Servers
 
-### Test Description
+* **Script**: `a1_load_distribution.py`
+* **Purpose**: To evaluate how evenly the load balancer distributes incoming HTTP requests across three backend servers under normal operation.
+* **Setup**: Simulates 10,000 concurrent requests using asynchronous execution with a cap of 100 concurrent tasks at any given time.
+* **Expected Behavior**: Requests should be approximately evenly distributed among the three servers.
+* **Result Image**:
 
-* 10,000 HTTP GET requests sent to load balancer
-* 3 backend servers available
-* Expected: Equal distribution of requests across all servers
+![A-1 Result](A-1.jpg)
 
-### Observations
-
-* Server request counts:
-
-  * server-1: 3321
-  * server-2: 3334
-  * server-3: 3345
-* Minor variation due to concurrency and network timing.
-* Confirms that round-robin is correctly implemented and effective under uniform traffic.
-
-### Visualization
-
-![A-1 Load Distribution](./A-1.jpg)
+* **Observation**: If the distribution is significantly skewed, it may point to inefficiencies or imbalance in the hashing algorithm or backend availability.
 
 ---
 
-## 3. 🔹 A-2: Scalability (Adding Servers)
+## 🧪 Test A-2: Scalability With Increasing Backend Servers
 
-### Test Description
+* **Script**: `a2_scalability_test.py`
+* **Purpose**: To evaluate how well the load balancer scales when the number of available backend servers is increased from 2 to 6.
+* **Setup**: Repeats the same 10,000-request workload for each server count (`N=2` to `N=6`), pausing slightly between tests to simulate real-world deployments.
+* **Expected Behavior**: As more servers are added, the load should be balanced proportionally across all available servers.
+* **Result Image**:
 
-* Gradually increased number of backend servers from 2 to 6
-* Measured load received per server
+![A-2 Result](A-2.jpg)
 
-### Observations
-
-* As server count increased, average number of requests per server decreased linearly.
-* Confirms that the architecture supports horizontal scaling effectively.
-* No load spike or significant imbalance observed during scale-out.
-
-### Visualization
-
-![A-2 Scalability](./A-2.jpg)
+* **Observation**: Look for consistent distribution and whether any server is disproportionately loaded, which may suggest hash collision issues or improper ring resizing.
 
 ---
 
-## 4. 🔹 A-3: Resilience to Failure
+## 🧪 Test A-3: Fault Tolerance Test (Manual Intervention Required)
 
-### Test Description
+* **Script**: `a3_failt_tolerance.py`
+* **Purpose**: To simulate a real-world fault scenario where one of the servers (e.g., `server2`) becomes unavailable, and observe whether the system reroutes traffic accordingly.
+* **Setup**:
 
-* Simulated failure by killing one server container during active load test
-* Docker set to auto-restart failed containers
+  1. Sends 1,000 requests and prints distribution.
+  2. User is instructed to stop one container (e.g., `docker stop server2`).
+  3. Sends another 1,000 requests and prints new distribution.
+* **Expected Behavior**: The failed server should receive 0 requests after failure, and its share should be redistributed among the remaining servers.
+* **Observation**: If requests continue to be routed to the failed server, it may indicate a lack of active health checks or improper cache invalidation.
 
-### Observations
-
-* Immediate 5xx errors occurred after server failure
-* Docker restarted the container within 2–3 seconds
-* Load balancer resumed routing to the restored server without manual intervention
-* Some user experience degradation during recovery period
-
-### Recommendation
-
-* Add retry and backoff logic to reduce client-side errors
-* Consider adding health-check logic to pre-emptively stop routing to unhealthy servers
+> *Note: This test does not generate a graphical output.*
 
 ---
 
-## 5. 🔹 A-4: Sticky Sessions (Hash-Based Routing)
+## 🧪 Test A-4: Hash Function Analysis
 
-### Test Description
+### A-4.1: Load Distribution Using Different Hash Functions
 
-* Routing based on hash of client IP (simulated using custom headers)
-* Tested with skewed client distribution (few IPs making many requests)
+* **Script**: `a4_hash_function_analysis.py` (function: `run_a41()`)
+* **Purpose**: To compare how three different hash functions affect load balancing across 3 servers.
+* **Hash Variants**:
 
-### Observations
+  * `Default`: Modular arithmetic
+  * `Hash A`: Multiplicative method
+  * `Hash B`: Bit-shift and XOR logic
+* **Expected Behavior**: Ideal hash functions will distribute requests as evenly as possible.
+* **Result Image**:
 
-* Clients consistently routed to the same server
-* Uneven load observed when client distribution was skewed
-* Sticky sessions work, but fairness drops significantly
+![A-4.1 Result](./tests/a4_1_load_distribution.png)
 
-### Recommendation
+* **Observation**: Disparities in the bar chart can indicate weaknesses in the uniformity of a hash function.
 
-* Use consistent hashing only when session stickiness is required
-* Add optional balancing within hash buckets to reduce long-tail impact
+### A-4.2: Scalability of Different Hash Functions
 
----
+* **Script**: `a4_hash_function_analysis.py` (function: `run_a42()`)
+* **Purpose**: To measure the average number of requests handled per server as the number of servers (`N`) increases from 2 to 6, using each hash function.
+* **Result Image**:
 
-## 6. 🔢 Raw Data Sources
+![A-4.2 Result](./tests/a4_2_scalability.png)
 
-* [`results/requests_per_server.csv`](../results/requests_per_server.csv) — per-server request count
-* [`results/response_times.json`](../results/response_times.json) — response time samples per server
-
----
-
-## 7. ⚖️ Summary Table
-
-| Test ID | Scenario                 | Outcome Summary                                  |
-| ------- | ------------------------ | ------------------------------------------------ |
-| A-1     | Round-robin Load Sharing | Even distribution with minor latency-based noise |
-| A-2     | Scaling Servers (2→6)    | Load per server decreased linearly               |
-| A-3     | Simulated Failure        | Recovery successful, retry logic recommended     |
-| A-4     | Hash Routing             | Sticky sessions OK, but caused imbalance         |
+* **Observation**: The flattest, most stable trendline across all `N` values indicates the most reliable hash function for dynamic scaling.
 
 ---
 
-## 8. 📅 Future Work
+## ▶️ How to Run the Tests
 
-* Integrate Prometheus for detailed live metrics
-* Visualize real-time trends with Grafana dashboards
-* Add intelligent failover routing
-* Test with more realistic traffic patterns (burst, random, zipfian)
-* Extend to Kubernetes with service discovery and rolling updates
+### 1. Prerequisites
+
+* Docker must be installed and running.
+* Backend server containers (e.g., `server1`, `server2`, ...) should be accessible via Docker network.
+* Python 3.8+ environment is recommended.
+* Install required Python packages:
+
+```bash
+pip install aiohttp matplotlib numpy
+```
+
+### 2. Startup Instructions
+
+Start your Docker setup with backend services and load balancer. Example:
+
+```bash
+docker-compose up --build
+```
+
+Ensure each backend server returns a JSON payload like:
+
+```json
+{"message": "Hello from Server: X"}
+```
+
+### 3. Executing Tests
+
+Each of the following scripts should be executed one at a time from the terminal:
+
+#### A-1: Load Distribution
+
+```bash
+python a1_load_distribution.py
+```
+
+#### A-2: Scalability Test
+
+```bash
+python a2_scalability_test.py
+```
+
+#### A-3: Fault Tolerance Test
+
+```bash
+python a3_failt_tolerance.py
+```
+
+* *User intervention required: Stop one of the running server containers when prompted.*
+
+#### A-4: Hash Function Analysis
+
+```bash
+python a4_hash_function_analysis.py
+```
+
+* *Generates and saves two plots: `a4_1_load_distribution.png` and `a4_2_scalability.png`.*
+
+---
+
+## 📝 Conclusion
+
+These tests provide a thorough evaluation of the implemented load balancer’s ability to:
+
+* Distribute load effectively
+* Scale with additional resources
+* Handle failures gracefully
+* Optimize load distribution through different hash strategies
+
+For long-term robustness and scaling, continuous refinement of the hashing logic and active health checking are recommended.
