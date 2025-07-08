@@ -64,7 +64,7 @@ This document contains the results and execution guidelines for a series of test
 * **Expected Behavior**: Ideal hash functions will distribute requests as evenly as possible.
 * **Result Image**:
 
-![A-4.1 Result](./tests/a4_1_load_distribution.png)
+![A-4.1 Result](/tests/a4_1_load_distribution.png)
 
 * **Observation**: Disparities in the bar chart can indicate weaknesses in the uniformity of a hash function.
 
@@ -74,7 +74,7 @@ This document contains the results and execution guidelines for a series of test
 * **Purpose**: To measure the average number of requests handled per server as the number of servers (`N`) increases from 2 to 6, using each hash function.
 * **Result Image**:
 
-![A-4.2 Result](./tests/a4_2_scalability.png)
+![A-4.2 Result](/tests/a4_2_scalability.png)
 
 * **Observation**: The flattest, most stable trendline across all `N` values indicates the most reliable hash function for dynamic scaling.
 
