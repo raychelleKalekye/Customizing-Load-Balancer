@@ -57,8 +57,8 @@ Ensure you have the following installed:
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/distributed-load-balancer.git
-cd distributed-load-balancer
+git clone https://github.com/raychelleKalekye/Customizing-Load-Balancer.git
+cd Customizing-Load-Balancer
 ```
 
 #### 2. Build Docker Images
