@@ -21,6 +21,9 @@ The project also includes a full testing suite to evaluate performance under var
 │   └── load_balancer.py
 ├── results/
 │   ├── requests_per_server.txt
+│   ├── log_screenshot_a1.jpg
+│   ├── log_screenshot_a2.jpg
+│   ├── log_screenshot_a3.jpg
 │   └── response_times.json
 ├── servers/
 │   ├── Dockerfile
@@ -144,6 +147,9 @@ Various performance evaluation tests were implemented to study the behavior unde
 * [`docs/TEST_RESULTS.md`](./docs/TEST_RESULTS.md): Detailed test results and analysis
 * [`results/response_times.json`](./results/response_times.json): Timing data
 * [`results/requests_per_server.txt`](./results/requests_per_server.txt): Server request logs
+* [`results/log_screenshot_a1.jpg`](./results/log_screenshot_a1.jpg): Screenshot of test A-1 results
+* [`results/log_screenshot_a2.jpg`](./results/log_screenshot_a2.jpg): Screenshot of test A-2 results
+* [`results/log_screenshot_a3.jpg`](./results/log_screenshot_a3.jpg): Screenshot of test A-3 results
 
 ---
 
